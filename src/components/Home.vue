@@ -27,7 +27,11 @@
 				</div>
 				<div class="notice">中信银行将为您邮寄卡片，请保证填写地址真实有效</div>
 				<div class="tel-code-wrapper panel">
-					<telcodegroup ref="telcode"></telcodegroup>
+					<!--<telcodegroup ref="telcode"></telcodegroup>-->
+				  <ul class="tellist">
+						<telnum ref="telnumEl" @change="telnumChange"></telnum>
+						<telcode ref="telcodeEl" @change="telcodeChange"  v-show="needMsgcode"></telcode>
+					</ul>
 				</div>
 				<div class="notice">该手机号将作为您的中信银行预留手机号</div>
 				<div>
@@ -44,10 +48,11 @@
 
 <script>
 import Telcodegroup from '@/components/Telcodegroup'
+import Telnum from '@/components/Telnum'
 import Agreecheckbox from '@/components/Checkbox'
 import Toast from '@/components/Toast'
 import ConfirmMask from '@/components/ConfirmMask.vue'
-import {getDriverInfo,getCityName} from 'api/home'	
+import {getDriverInfo,getCityName,checkBanknetApi} from 'api/home'	
 	
 export default {
   name: 'Home',
@@ -60,7 +65,8 @@ export default {
 		  	},
 		  	area:null,		//所在区域，根据定位获取后赋值
 		  	addressInput:null,  //输入的详细地址，最多20字
-		  	
+		  	telnumInput:'',
+		  	needMsgcode:false,
 		  	isAgree:false,  //是否同意各种协议 , 默认是未选中
 		  	noneBankNet:false //当前定位城市没有银行网点弹窗提示，false-不提示，true-提示
     }
@@ -77,51 +83,26 @@ export default {
 		}
 	},
 	mounted: function(){
-//		console.log(1)
-//		console.log(this.$refs.telcode)
-
-//		console.log(this.$refs.toast)
-//		this.$refs.toast.show('init')
-
-//		console.log(this.$refs.confirmmask)
-//		this.$refs.confirmmask.show()
-		
 		this.getCurrentPosition();
 	  this.initData();
 	},
 	methods:{
-	  	initData:function (){
+	  initData:function (){
 	  		console.log('init')
 	  		var vm = this;
-	  		setTimeout(function(){
-	  			vm.info = {
+	  		getDriverInfo().then((data)=>{
+					console.log(data);
+					vm.info = {
 			  		name:'happy',
 			  		identity:'130521***3445',
 		  			telnumBring:'16801010040'
 			  	}
-		  		//vm.telnumInput = vm.info.telnumBring;  //TODO
+		  		vm.$refs.telnumEl.setVal(vm.info.telnumBring );
 		  		//vm.resultCode = 202;
-		  		
-		  		vm.initArea();
-		  		
-	  		},200)
-		  		
-	  		/*$.ajax({
-	  			type:"(get)",
-	  			url:"",
-	  			//dataType:'jsonp',
-	  			//xhrFields: {
-                //    withCredentials: true
-                //},
-                //crossDomain: true,
-                success:function(data) {
-                	alert(data)
-                },
-                error:function(err){
-                    vm.showToastFn(err.msg)
-                }
-	  		});*/
-	  		
+		  		if(vm.resultCode == null){
+		  			vm.initArea();
+		  		}
+				})
 		},
 		initArea:function(){  //初始化区域三级联动插件
 			var area = new LArea();
@@ -164,37 +145,30 @@ export default {
 			})
 			
 		},
+		telnumChange:function(telnum,isNeedMsg){
+			console.log(telnum,isNeedMsg)
+			this.telnumInput = telnum;
+			this.needMsgcode = isNeedMsg;
+		},
 		checkAgree:function(isCheckAgree){
 			this.isAgree = isCheckAgree;
 		},
 		checkBankNet:function(net,callback){  //判断所选区域是否有银行网点
 			var vm = this;
-			setTimeout(function(){
+			checkBanknetApi().then((data)=>{
+				console.log(data)
 				if(net=='河北省,石家庄市,藁城市' || net==='河北省,邢台市,邢台县'){
 					if(callback ) callback();
 				}else{
 					vm.$refs.confirmmask.show()
 				}
-			},500)
-			
-			/*$.ajax({
-	  			type:"(get)",
-	  			url:"",
-	  			//dataType:'jsonp',
-	  			//xhrFields: {
-                //    withCredentials: true
-                //},
-                //crossDomain: true,
-                success:function(data) {
-                	alert(data)
-                },
-                error:function(err){
-                    vm.showToastFn(err.msg)
-                }
-	  		});*/
+			})
 		},
 		submitInfo:function(){
 			var vm = this;
+			if(!this.isAgree){
+				return
+			}
 			var allData = {
 				name:this.info.name,
 				identity:this.info.identity,
@@ -211,21 +185,6 @@ export default {
 				},200)
 				
 			});
-			/*$.ajax({
-	  			type:"(get)",
-	  			url:"",
-	  			//dataType:'jsonp',
-	  			//xhrFields: {
-                //    withCredentials: true
-                //},
-                //crossDomain: true,
-                success:function(data) {
-                	alert(data)
-                },
-                error:function(err){
-                    vm.showToastFn(err.msg)
-                }
-	  		});*/
 		},
 		reApply:function(){
 			console.log('重新申请')
@@ -233,29 +192,23 @@ export default {
 			this.initData();
 		}
 		
-  	},
-  	watch:{
-  		area:function(newVal,oldVel){  //监测区域变化， 判断所选区域是否有银行网点
-  			//console.log(newVal+" ---- "+oldVel)
-  			//初始化赋值那次变化，不用判断是否有网点，为提升用户体验
-  			if(oldVel){
-  				this.checkBankNet(newVal)
-  			}
-  		},
-  		telnumInput:function(newVal,oldVel){  //监测手机号输入变化，判断是否是易到注册的
-  			/*if(this.$refs.telcode.checkTelnum() && oldVel){
-  				this.checkTelnumYidao(newVal)
-  			}else if(!this.$refs.telcode.checkTelnum()){  //只要手机号输入不合法，就展示短信验证码
-  				this.needMsgcode = true;
-  			}*/
-  		}
-  	},
-  	components:{
-  		Telcodegroup,
-  		Agreecheckbox,
-  		Toast,
-  		ConfirmMask
-  	}
+	},
+	watch:{
+		area:function(newVal,oldVel){  //监测区域变化， 判断所选区域是否有银行网点
+			//console.log(newVal+" ---- "+oldVel)
+			//初始化赋值那次变化，不用判断是否有网点，为提升用户体验
+			if(oldVel){
+				this.checkBankNet(newVal)
+			}
+		}
+	},
+	components:{
+		Telcodegroup,
+		Telnum,
+		Agreecheckbox,
+		Toast,
+		ConfirmMask
+	}
 }
 </script>
 

@@ -10,12 +10,42 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+//  	'/https://www.yongche.com/greencar/ajax/get_city.php': {
+//      target: 'https://www.yongche.com/greencar/ajax/get_city.php', // 接口的域名
+//      // secure: false,  // 如果是https接口，需要配置这个参数
+//      changeOrigin: true // 如果接口跨域，需要进行这个参数配置
+//      //pathRewrite: {
+//      //  '^/api': ''
+//      //}
+//    },
+      '/https://www.yongche.com': {
+        target: 'https://www.yongche.com', // 接口的域名
+        changeOrigin: true, // 如果接口跨域，需要进行这个参数配置
+        pathRewrite: {
+          '^/https://www.yongche.com': ''
+        }
+      },
+      '/https://market.yongChe.com': {
+        target: 'https://market.yongChe.com', // 接口的域名
+        changeOrigin: true, // 如果接口跨域，需要进行这个参数配置
+        pathRewrite: {
+          '^/https://market.yongChe.com': ''
+        }
+      },
+      '/https://testing-market.yongChe.Org': {
+        target: 'https://testing-market.yongChe.Org', // 接口的域名
+        changeOrigin: true, // 如果接口跨域，需要进行这个参数配置
+        pathRewrite: {
+          '^/https://testing-market.yongChe.Org': ''
+        }
+      }
+    },
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST
     port: 3000, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
-    autoOpenBrowser: false,
+    autoOpenBrowser: true,
     errorOverlay: true,
     notifyOnErrors: true,
     poll: false, // https://webpack.js.org/configuration/dev-server/#devserver-watchoptions-
@@ -43,7 +73,7 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/',
+    assetsPublicPath: '',
 
     /**
      * Source Maps

@@ -30,7 +30,9 @@ const webpackConfig = merge(baseWebpackConfig, {
   plugins: [
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
     new webpack.DefinePlugin({
-      'process.env': env
+      'process.env': env,
+      LOCAL_ROOT: JSON.stringify(''),
+      LOCAL_DOMAIN: JSON.stringify('https://market.yongChe.com')
     }),
     new UglifyJsPlugin({
       uglifyOptions: {

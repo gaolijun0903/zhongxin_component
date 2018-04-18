@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import {checkTelnumYidaoApi,getCodeApi} from 'api/telcode'	
 export default {
   name: 'result',
   data () {
@@ -78,45 +79,24 @@ export default {
 		},
 		checkTelnumYidao:function(tel){ //判断手机号，是否为易到注册的，由此决定是否需要短信验证码
 			var vm = this;
-			setTimeout(function(){
+			checkTelnumYidaoApi().then((data)=>{
+				console.log('checkTelnumYidaoApi')
 				if(tel==='16801010040' || tel==='16801010041'){
 					vm.needMsgcode = false; //是易到的，不用短信验证
 				}else{
 					console.log('不是易到注册的，需要短信验证码')
 					vm.needMsgcode = true;
 				}
-			},500)
-			/*$.ajax({
-	  			type:"(get)",
-	  			url:"",
-	  			//dataType:'jsonp',
-	  			//xhrFields: {
-                //    withCredentials: true
-                //},
-                //crossDomain: true,
-                success:function(data) {
-                	alert(data)
-                },
-                error:function(err){
-                    vm.showToastFn(err.msg)
-                }
-	  		});*/
+			})
+			
 		},
 		sendMsgcode:function(){
 			console.log('发送短信验证码')
 			console.log(this.telnumInput)
 			console.log(this.imgcodeInput)
 			var vm = this;
-			$.ajax({
-                type:'get',
-                url:'https://market.yongche.com/activity/Webuser/getCode?cellphone='+this.telnumInput+'&captcha='+this.imgcodeInput,
-                dataType:'jsonp',
-                xhrFields: {
-                    withCredentials: true
-                },
-                crossDomain: true,
-                success:function(data) {
-                    console.log(data);
+			getCodeApi(this.telnumInput,this.imgcodeInput).then(()=>{
+				console.log(data);
                     if(data.code==401){//需要图形验证码，图形验证码展示
                         vm.needImgcode = true;
                         vm.ableToClick = true; //可以再次请求获取验证码
@@ -142,25 +122,21 @@ export default {
                             vm.getImgCode();
                         }
                     }
-                },
-                error:function(err){
-                    vm.showToastFn(err.msg)
-                }
-            })
+			})
 		},
 		msgcodeCountdown:function(){//短信验证码发送后，倒计时
 			var vm = this;
 			vm.isActive = false;
-            var countdown = setInterval(function(){
-                if (vm.counttime <= 0) {
-                	vm.counttime = 60;
-                	vm.isActive = true;
-                	vm.ableToClick = true;
-                    clearInterval(countdown);
-                    return 
-                }
-                vm.counttime--;
-            }, 1000);
+	    var countdown = setInterval(function(){
+	        if (vm.counttime <= 0) {
+	        	vm.counttime = 60;
+	        	vm.isActive = true;
+	        	vm.ableToClick = true;
+	            clearInterval(countdown);
+	            return 
+	        }
+	        vm.counttime--;
+	    }, 1000);
 		}
   },
   watch:{
